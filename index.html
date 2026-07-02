@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>БАРАБАН</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #e6ecf3;
+    --accent: #5b8def;
+    --accent-dim: rgba(91, 141, 239, 0.3);
+    --gold: #d98a06;
+    --gold-deep: #e8955b;
+    --danger: #ef6a6a;
+    --violet: #7c5cf0;
+    --text: #1d2733;
+    --text-dim: #93a0ae;
+    --glass: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.75);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Poppins', -apple-system, sans-serif;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #app {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ---------- background glow ---------- */
+  #bgGlow {
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(ellipse 55% 40% at 30% 25%, rgba(255, 255, 255, 0.9) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 45% at 50% 48%, rgba(91, 141, 239, 0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 75% 90%, rgba(160, 185, 215, 0.45) 0%, transparent 65%);
+    opacity: 0.45;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #bgNoise {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.15 0 0 0 0 0.2 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- header ---------- */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: calc(14px + env(safe-area-inset-top)) 22px 0;
+    pointer-events: none;
+  }
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 5px;
+    color: var(--text-dim);
+  }
+  .round-chip {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+  }
+  .round-chip b { color: var(--text); font-weight: 500; }
+
+  .score-block {
+    margin-top: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  #totalScore {
+    font-size: 58px;
+    font-weight: 100;
+    line-height: 1;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-unit {
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+  #rpmBadge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: 1px;
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+
+  .stat-chips {
+    margin-top: 12px;
+    display: flex;
+    gap: 6px;
+  }
+  .chip {
+    flex: 1;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 7px 4px 6px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 18px rgba(45, 65, 90, 0.08);
+  }
+  .chip .v {
+    font-size: 13px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip .l {
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+
+  .level-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .level-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .level-label b { color: var(--violet); font-weight: 500; }
+  .xp-track {
+    flex: 1;
+    height: 3px;
+    background: rgba(29, 39, 51, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  #xpFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--violet), #c4b5fd);
+    border-radius: 2px;
+    transition: width 0.25s ease-out;
+  }
+  #xpText {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ---------- stage ---------- */
+  #stage {
+    position: relative;
+    flex: 1;
+    z-index: 5;
+    perspective: 620px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #coinLayer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .coin {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe98a, #ffd700 45%, #e8955b 100%);
+    will-change: transform, opacity;
+  }
+
+  #speedLines {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 0; height: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .sline {
+    position: absolute;
+    left: 0; top: 0;
+    width: 130px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-dim));
+    transform-origin: 0 0;
+    opacity: 0;
+  }
+
+  #punchWrap {
+    position: relative;
+    z-index: 5;
+    transition: transform 0.8s ease-out;
+    will-change: transform;
+  }
+  #deformWrap {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  #drum {
+    position: relative;
+    width: 42px;
+    height: 320px;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .face {
+    position: absolute;
+    left: 0; top: 0;
+    width: 42px;
+    height: 320px;
+    border-radius: 2px;
+    backface-visibility: hidden;
+    will-change: box-shadow;
+  }
+
+  #drumGlow {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 340px; height: 340px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-dim) 0%, transparent 65%);
+    opacity: 0;
+    z-index: 4;
+    pointer-events: none;
+    filter: blur(6px);
+  }
+  #drumShadow {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 175px);
+    width: 230px;
+    height: 36px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(45, 65, 90, 0.22) 0%, transparent 70%);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  #floatLayer {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .float-text {
+    position: absolute;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--gold);
+    text-shadow: 0 2px 14px rgba(217, 138, 6, 0.35);
+    animation: floatUp 1.2s ease-out forwards;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .float-text.crit { color: var(--gold); font-size: 21px; }
+  .float-text.lvl { color: var(--violet); text-shadow: 0 2px 14px rgba(124,92,240,0.35); }
+  @keyframes floatUp {
+    0% { transform: translateY(0); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(-80px); opacity: 0; }
+  }
+
+  #comboBadge {
+    position: absolute;
+    left: 50%;
+    bottom: 18%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 9;
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    position: relative;
+    z-index: 10;
+    padding: 0 26px calc(22px + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  #hint {
+    text-align: center;
+    margin-bottom: 16px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  #hint .arrows {
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: var(--text);
+  }
+  #hint .sub {
+    font-size: 10px;
+    font-weight: 300;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  .speed-track {
+    position: relative;
+    height: 3px;
+    background: rgba(29, 39, 51, 0.1);
+    border-radius: 2px;
+  }
+  #speedFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(91,141,239,0.4), var(--accent));
+    border-radius: 2px;
+  }
+  #speedKnob {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3.5px solid #ffffff;
+    box-shadow: 0 2px 10px rgba(91, 141, 239, 0.45);
+    transform: translate(-50%, -50%);
+  }
+
+  /* ---------- modal base ---------- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(228, 235, 243, 0.45);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal.show { opacity: 1; pointer-events: auto; }
+  .modal-card {
+    width: min(330px, 88vw);
+    background: linear-gradient(165deg, rgba(255,255,255,0.85), rgba(255,255,255,0.55));
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    padding: 30px 26px;
+    text-align: center;
+    transform: translateY(8px);
+    transition: transform 0.3s;
+    box-shadow: 0 24px 70px rgba(45, 65, 90, 0.18);
+  }
+  .modal.show .modal-card { transform: translateY(0); }
+  .modal-title {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 6px;
+  }
+  .modal-sub {
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  .btn {
+    display: inline-block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 18px;
+    background: #1f2a37;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.2s;
+    box-shadow: 0 10px 26px rgba(31, 42, 55, 0.25);
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost {
+    background: var(--glass);
+    color: var(--text);
+    border: 1px solid var(--glass-border);
+    box-shadow: none;
+  }
+  .btn.danger { background: var(--danger); color: #ffffff; box-shadow: 0 10px 26px rgba(239, 106, 106, 0.35); }
+
+  /* ---------- roulette ---------- */
+  #cylinderBox {
+    position: relative;
+    width: 220px;
+    height: 240px;
+    margin: 18px auto 6px;
+  }
+  #pointerTri {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid var(--danger);
+    filter: drop-shadow(0 0 6px rgba(248,113,113,0.7));
+    z-index: 3;
+  }
+  #cylinder {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 190px; height: 190px;
+    margin: -95px 0 0 -95px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.9), rgba(226, 233, 241, 0.7) 60%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 14px 40px rgba(45, 65, 90, 0.14);
+    will-change: transform;
+  }
+  .chamber {
+    position: absolute;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(31, 42, 55, 0.12);
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: inset 0 3px 8px rgba(31, 42, 55, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chamber .slug {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6e7a86, #2c3640 70%);
+    opacity: 0;
+  }
+  .chamber.loaded .slug { opacity: 1; }
+  .hub {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 26px; height: 26px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid var(--glass-border);
+  }
+  #rouletteResult {
+    height: 34px;
+    margin: 8px 0 14px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #rouletteResult.ok { color: #10b981; text-shadow: 0 2px 16px rgba(16,185,129,0.35); }
+  #rouletteResult.bad { color: var(--danger); text-shadow: 0 2px 16px rgba(239,106,106,0.4); }
+
+  /* ---------- upgrades ---------- */
+  .up-card {
+    width: 100%;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-top: 10px;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.2s;
+  }
+  .up-card:active { transform: scale(0.97); border-color: var(--violet); }
+  .up-card .name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .up-card .name span { color: var(--violet); }
+  .up-card .desc {
+    font-size: 10.5px;
+    font-weight: 300;
+    color: var(--text-dim);
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ---------- death ---------- */
+  #skull { font-size: 44px; margin-bottom: 10px; }
+  .death-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 18px 0 6px;
+  }
+  .death-stats .item .num {
+    font-size: 26px;
+    font-weight: 200;
+    font-variant-numeric: tabular-nums;
+  }
+  .death-stats .item .cap {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  #lostPoints {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--danger);
+    margin-bottom: 20px;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bgGlow"></div>
+  <div id="bgNoise"></div>
+
+  <header>
+    <div class="top-row">
+      <div class="brand">БАРАБАН</div>
+      <div class="round-chip">РАУНД <b id="roundNum">1</b></div>
+    </div>
+    <div class="score-block">
+      <div id="totalScore">0</div>
+      <div class="score-unit">PTS</div>
+      <div id="rpmBadge">0.0 RPM</div>
+    </div>
+    <div class="stat-chips">
+      <div class="chip"><div class="v" id="stMass">100%</div><div class="l">МАССА</div></div>
+      <div class="chip"><div class="v" id="stImp">100%</div><div class="l">ИМПУЛЬС</div></div>
+      <div class="chip"><div class="v" id="stInc">100%</div><div class="l">ИНКОМ</div></div>
+      <div class="chip"><div class="v" id="stCrit">1.0x</div><div class="l">КРИТ</div></div>
+    </div>
+    <div class="level-row">
+      <div class="level-label">УР. <b id="lvlNum">1</b></div>
+      <div class="xp-track"><div id="xpFill"></div></div>
+      <div id="xpText">0 / 30</div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <div id="drumGlow"></div>
+    <div id="drumShadow"></div>
+    <div id="speedLines"></div>
+    <div id="coinLayer"></div>
+    <div id="punchWrap">
+      <div id="deformWrap">
+        <div id="drum"></div>
+      </div>
+    </div>
+    <div id="floatLayer"></div>
+    <div id="comboBadge">COMBO x1</div>
+  </div>
+
+  <footer>
+    <div id="hint">
+      <div class="arrows">←&nbsp;&nbsp;СВАЙП&nbsp;&nbsp;→</div>
+      <div class="sub">Крути барабан, набирай монеты</div>
+    </div>
+    <div class="speed-track">
+      <div id="speedFill"></div>
+      <div id="speedKnob"></div>
+    </div>
+  </footer>
+</div>
+
+<!-- РУЛЕТКА -->
+<div class="modal" id="rouletteModal">
+  <div class="modal-card">
+    <div class="modal-title">РУЛЕТКА</div>
+    <div class="modal-sub" id="bulletsInfo">Патронов: 1 из 6</div>
+    <div id="cylinderBox">
+      <div id="pointerTri"></div>
+      <div id="cylinder"></div>
+    </div>
+    <div id="rouletteResult"></div>
+    <button class="btn danger" id="spinBtn">КРУТИТЬ</button>
+    <button class="btn" id="continueBtn" style="display:none">ДАЛЬШЕ</button>
+  </div>
+</div>
+
+<!-- УЛУЧШЕНИЕ -->
+<div class="modal" id="upgradeModal">
+  <div class="modal-card">
+    <div class="modal-title">УЛУЧШЕНИЕ</div>
+    <div class="modal-sub">Выбери одно из трёх</div>
+    <div id="upgradeList"></div>
+  </div>
+</div>
+
+<!-- ВЫБЫЛ -->
+<div class="modal" id="deadModal">
+  <div class="modal-card">
+    <div id="skull">💀</div>
+    <div class="modal-title">ВЫБЫЛ</div>
+    <div class="death-stats">
+      <div class="item"><div class="num" id="dRounds">0</div><div class="cap">РАУНДОВ</div></div>
+      <div class="item"><div class="num" id="dLevel">0</div><div class="cap">УРОВЕНЬ</div></div>
+    </div>
+    <div id="lostPoints">Потеряно: 0</div>
+    <button class="btn" id="restartBtn">ЗАНОВО</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ===== Telegram ===== */
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.disableVerticalSwipes?.();
+  tg.setHeaderColor?.('#e6ecf3');
+  tg.setBackgroundColor?.('#e6ecf3');
+}
+const haptic = (type) => {
+  try {
+    if (!tg?.HapticFeedback) return;
+    if (type === 'light' || type === 'medium' || type === 'heavy') tg.HapticFeedback.impactOccurred(type);
+    else tg.HapticFeedback.notificationOccurred(type);
+  } catch (e) {}
+};
+
+/* ===== константы физики (из ТЗ) ===== */
+const PHYS = {
+  BASE_FRICTION: 0.993,
+  MAX_FRICTION: 0.999,
+  SWIPE_POWER: 0.15,
+  MAX_SWIPE: 0.8,
+  MIN_VELOCITY: 0.03,
+  MAX_VELOCITY: 5.0,
+};
+
+const RUBBER = {
+  punchR: 1.08,
+  punchH: 0.94,
+  punchIn: 0.15,
+  punchOut: 0.8,
+  speedThreshold: 0.8,
+  speedCurve: 3,
+  speedMaxR: 1.06,
+  speedMinH: 0.94,
+};
+
+const FACES = 16;
+const FACE_ANGLE = 360 / FACES;
+
+/* ===== состояние ===== */
+const baseStats = () => ({
+  mass: 1.0,
+  impulse: 1.0,
+  income: 1.0,
+  multiplier: 1.0,
+  luck: 0,
+  lubrication: 0,
+});
+
+let stats = baseStats();
+let total = 0;
+let round = 1;
+let level = 1;
+let xp = 0;
+let pendingUpgrades = 0;
+
+let velocity = 0;
+let angle = 0;
+let lastFaceIdx = 0;
+let runActive = false;
+let modalOpen = false;
+
+let comboCount = 0;
+let lastSwipeTime = 0;
+let gesturePower = 0;
+
+/* ===== DOM ===== */
+const $ = (id) => document.getElementById(id);
+const drum = $('drum');
+const punchWrap = $('punchWrap');
+const deformWrap = $('deformWrap');
+const stage = $('stage');
+const coinLayer = $('coinLayer');
+const floatLayer = $('floatLayer');
+
+/* ===== грани барабана ===== */
+const faceEls = [];
+{
+  const w = 42;
+  const R = w / (2 * Math.tan(Math.PI / FACES));
+  for (let i = 0; i < FACES; i++) {
+    const f = document.createElement('div');
+    f.className = 'face';
+    const light = i % 2 === 0 ? 86 : 90;
+    f.style.width = (w - 2) + 'px';
+    f.style.background = `linear-gradient(180deg, hsl(214, 32%, ${light + 4}%), hsl(214, 28%, ${light}%) 30%, hsl(214, 28%, ${light}%) 70%, hsl(214, 30%, ${light - 5}%))`;
+    f.style.transform = `rotateY(${i * FACE_ANGLE}deg) translateZ(${R.toFixed(1)}px)`;
+    drum.appendChild(f);
+    faceEls.push(f);
+  }
+}
+
+/* ===== speed-линии ===== */
+const slines = [];
+{
+  const holder = $('speedLines');
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement('div');
+    s.className = 'sline';
+    s.style.transform = `rotate(${i * 60 + 8}deg) translateX(150px)`;
+    holder.appendChild(s);
+    slines.push(s);
+  }
+}
+
+/* ===== звук (Web Audio, из ТЗ) ===== */
+let audioCtx = null;
+const ensureAudio = () => {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  if (audioCtx?.state === 'suspended') audioCtx.resume();
+};
+const clickSound = (spd) => {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  if (spd < 4) {
+    osc.type = 'sine';
+    osc.frequency.value = 300 + spd * 60;
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01);
+    osc.stop(t + 0.012);
+  } else {
+    osc.type = 'sawtooth';
+    osc.frequency.value = 60 + spd * 10;
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    osc.stop(t + 0.055);
+  }
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t);
+};
+
+/* ===== монетки ===== */
+const coins = [];
+const spawnCoins = (speedPct) => {
+  const count = 1 + Math.floor(speedPct * speedPct * 8);
+  const W = stage.clientWidth, H = stage.clientHeight;
+  for (let i = 0; i < count; i++) {
+    if (coins.length > 90) break;
+    const el = document.createElement('div');
+    el.className = 'coin';
+    coinLayer.appendChild(el);
+    const ang = Math.random() * Math.PI * 2;
+    const sp = 2 + Math.random() * 4 * (0.5 + speedPct);
+    coins.push({
+      el,
+      x: W * (0.5 + (Math.random() - 0.5) * 0.1),
+      y: H * (0.46 + (Math.random() - 0.5) * 0.03),
+      vx: Math.cos(ang) * sp,
+      vy: Math.sin(ang) * sp - 3,
+      rot: Math.random() * Math.PI * 2,
+      rotSp: 0.15 + Math.random() * 0.25,
+      life: 1,
+    });
+  }
+};
+const updateCoins = () => {
+  const H = stage.clientHeight;
+  for (let i = coins.length - 1; i >= 0; i--) {
+    const c = coins[i];
+    c.x += c.vx;
+    c.y += c.vy;
+    c.vy += 0.22;
+    c.rot += c.rotSp;
+    c.life -= 0.012;
+    if (c.life <= 0 || c.y > H + 30) {
+      c.el.remove();
+      coins.splice(i, 1);
+      continue;
+    }
+    const sx = Math.abs(Math.cos(c.rot));
+    c.el.style.transform = `translate(${c.x}px, ${c.y}px) scale(${sx}, 1)`;
+    c.el.style.opacity = Math.min(1, c.life * 1.6);
+    c.el.style.boxShadow = `0 0 ${10 * c.life}px rgba(251, 191, 36, ${0.55 * c.life})`;
+  }
+};
+
+/* ===== floating text ===== */
+const floatText = (txt, cls) => {
+  const el = document.createElement('div');
+  el.className = 'float-text ' + (cls || '');
+  el.textContent = txt;
+  el.style.left = (38 + Math.random() * 24) + '%';
+  el.style.top = (34 + Math.random() * 14) + '%';
+  floatLayer.appendChild(el);
+  setTimeout(() => el.remove(), 1250);
+};
+
+/* ===== UI обновление ===== */
+const fmt = (n) => Math.floor(n).toLocaleString('ru-RU');
+const xpForLevel = (lvl) => Math.floor(30 * Math.pow(2.86, lvl - 1));
+
+const updateHUD = () => {
+  $('totalScore').textContent = fmt(total);
+  $('roundNum').textContent = round;
+  $('lvlNum').textContent = level;
+  const need = xpForLevel(level);
+  $('xpFill').style.width = Math.min(100, (xp / need) * 100) + '%';
+  $('xpText').textContent = fmt(xp) + ' / ' + fmt(need);
+  $('stMass').textContent = Math.round(stats.mass * 100) + '%';
+  $('stImp').textContent = Math.round(stats.impulse * 100) + '%';
+  $('stInc').textContent = Math.round(stats.income * 100) + '%';
+  $('stCrit').textContent = stats.multiplier.toFixed(1) + 'x';
+};
+
+/* ===== свайпы ===== */
+let dragging = false;
+let lastX = 0;
+
+const punch = () => {
+  punchWrap.style.transition = `transform ${RUBBER.punchIn}s cubic-bezier(0.34, 1.56, 0.64, 1)`;
+  punchWrap.style.transform = `scale(${RUBBER.punchR}, ${RUBBER.punchH})`;
+  setTimeout(() => {
+    punchWrap.style.transition = `transform ${RUBBER.punchOut}s ease-out`;
+    punchWrap.style.transform = 'scale(1, 1)';
+  }, 200);
+};
+
+stage.addEventListener('pointerdown', (e) => {
+  if (modalOpen) return;
+  ensureAudio();
+  dragging = true;
+  lastX = e.clientX;
+  gesturePower = 0;
+  const now = performance.now();
+  if (now - lastSwipeTime < 900) comboCount = Math.min(comboCount + 1, 20);
+  else comboCount = 0;
+  lastSwipeTime = now;
+  punch();
+  haptic('light');
+});
+
+stage.addEventListener('pointermove', (e) => {
+  if (!dragging || modalOpen) return;
+  const dx = e.clientX - lastX;
+  lastX = e.clientX;
+  if (dx === 0) return;
+  const swipeSpeed = Math.abs(dx) / 14;
+  const power = Math.min(swipeSpeed * PHYS.SWIPE_POWER * stats.impulse, PHYS.MAX_SWIPE);
+  const comboMult = 1 + Math.min(comboCount * 0.06, 0.3);
+  const add = power * comboMult * Math.sign(dx) * 0.12;
+  velocity = Math.max(-PHYS.MAX_VELOCITY, Math.min(PHYS.MAX_VELOCITY, velocity + add));
+  gesturePower = Math.min(gesturePower + power * 0.1, PHYS.MAX_SWIPE);
+  if (!runActive && Math.abs(velocity) > PHYS.MIN_VELOCITY * 3) {
+    runActive = true;
+    $('hint').style.display = 'none';
+  }
+});
+
+const endDrag = () => {
+  if (!dragging) return;
+  dragging = false;
+  if (gesturePower > 0.01) {
+    const gained = Math.max(1, Math.floor(gesturePower * 5 * (1 + comboCount * 0.2)));
+    xp += gained;
+    let need = xpForLevel(level);
+    while (xp >= need) {
+      xp -= need;
+      level++;
+      pendingUpgrades++;
+      floatText('УРОВЕНЬ ' + level, 'lvl');
+      haptic('success');
+      need = xpForLevel(level);
+    }
+    updateHUD();
+  }
+};
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('pointercancel', endDrag);
+
+/* ===== главный цикл ===== */
+let critFlash = 0;
+let lastTick = performance.now();
+
+const tick = (now) => {
+  requestAnimationFrame(tick);
+  const dt = Math.min((now - lastTick) / 16.667, 3) || 1;
+  lastTick = now;
+  if (modalOpen) { updateCoins(); return; }
+
+  const friction = Math.min(
+    PHYS.BASE_FRICTION + stats.mass * 0.001 + stats.lubrication * 0.002,
+    PHYS.MAX_FRICTION
+  );
+  velocity *= Math.pow(friction, dt);
+
+  const absV = Math.abs(velocity);
+  const speedPct = Math.min(absV / PHYS.MAX_VELOCITY, 1);
+
+  if (absV < PHYS.MIN_VELOCITY) {
+    velocity = 0;
+    if (runActive && !dragging) {
+      runActive = false;
+      setTimeout(openRoulette, 450);
+    }
+  }
+
+  angle += velocity * 2.2 * dt;
+  drum.style.transform = `rotateY(${angle.toFixed(2)}deg)`;
+
+  const faceIdx = Math.floor(((angle % 360) + 360) % 360 / FACE_ANGLE);
+  if (faceIdx !== lastFaceIdx) {
+    lastFaceIdx = faceIdx;
+    if (absV > 0.1) clickSound(absV);
+  }
+
+  if (absV > PHYS.MIN_VELOCITY) {
+    const gain = absV * 0.0175 * stats.income * 25 * dt;
+    if (Math.random() < 0.015 * stats.multiplier * dt) {
+      const crit = Math.max(1, gain * (3 + stats.multiplier) * 20);
+      total += crit;
+      floatText('+' + fmt(crit), 'crit');
+      critFlash = 1;
+      haptic('medium');
+    }
+    total += gain;
+    if (Math.random() < speedPct * 0.25 * dt) spawnCoins(speedPct);
+  }
+
+  /* скоростная деформация RUBBER */
+  let radiusScale = 1, heightScale = 1;
+  if (speedPct > RUBBER.speedThreshold) {
+    const t = (speedPct - RUBBER.speedThreshold) / (1 - RUBBER.speedThreshold);
+    const deform = Math.pow(t, RUBBER.speedCurve);
+    radiusScale = 1 + (RUBBER.speedMaxR - 1) * deform;
+    heightScale = 1 - (1 - RUBBER.speedMinH) * deform;
+  }
+  deformWrap.style.transform = `scale(${radiusScale.toFixed(3)}, ${heightScale.toFixed(3)})`;
+
+  /* свечение и цилиндрическое затенение граней */
+  const glow = speedPct * 0.5 + critFlash * 0.3;
+  critFlash *= 0.92;
+  for (let i = 0; i < FACES; i++) {
+    const f = faceEls[i];
+    const c = Math.cos((i * FACE_ANGLE + angle) * Math.PI / 180);
+    if (c <= 0.02) continue;
+    f.style.filter = `brightness(${(0.78 + c * 0.3).toFixed(2)})`;
+    f.style.boxShadow = glow > 0.04
+      ? `inset 0 0 ${22 * glow}px rgba(91, 141, 239, ${0.5 * glow})`
+      : 'none';
+  }
+  $('drumGlow').style.opacity = speedPct * 0.7;
+  $('bgGlow').style.opacity = 0.45 + speedPct * 0.55;
+
+  /* speed-линии */
+  for (let i = 0; i < slines.length; i++) {
+    slines[i].style.opacity = speedPct > 0.2 ? (speedPct - 0.2) * 0.7 : 0;
+  }
+
+  /* HUD скорости */
+  $('speedFill').style.width = speedPct * 100 + '%';
+  $('speedKnob').style.left = speedPct * 100 + '%';
+  $('rpmBadge').textContent = (speedPct * 3.3).toFixed(1) + ' RPM';
+  $('rpmBadge').style.opacity = 0.4 + speedPct * 0.6;
+  $('totalScore').textContent = fmt(total);
+
+  /* combo */
+  const cb = $('comboBadge');
+  if (comboCount >= 3 && (dragging || performance.now() - lastSwipeTime < 1200)) {
+    cb.textContent = 'COMBO x' + comboCount;
+    cb.style.opacity = 1;
+  } else {
+    cb.style.opacity = 0;
+  }
+
+  updateCoins();
+};
+requestAnimationFrame(tick);
+
+/* ===== рулетка ===== */
+const bulletsForRound = () => {
+  const bullets = Math.min(1 + Math.floor((round - 1) / 3), 5);
+  return Math.max(1, bullets - Math.floor(stats.luck * bullets));
+};
+
+let chamberLoaded = [];
+let cylinderRot = 0;
+
+const renderChambers = (count) => {
+  const cyl = $('cylinder');
+  cyl.querySelectorAll('.chamber, .hub').forEach((n) => n.remove());
+  chamberLoaded = Array(6).fill(false);
+  const idxs = [0, 1, 2, 3, 4, 5].sort(() => Math.random() - 0.5).slice(0, count);
+  idxs.forEach((i) => (chamberLoaded[i] = true));
+  for (let i = 0; i < 6; i++) {
+    const ch = document.createElement('div');
+    ch.className = 'chamber' + (chamberLoaded[i] ? ' loaded' : '');
+    const a = (i * 60 - 90) * Math.PI / 180;
+    const r = 62;
+    ch.style.left = (95 + Math.cos(a) * r - 21) + 'px';
+    ch.style.top = (95 + Math.sin(a) * r - 21) + 'px';
+    ch.innerHTML = '<div class="slug"></div>';
+    ch.dataset.idx = i;
+    cyl.appendChild(ch);
+  }
+  const hub = document.createElement('div');
+  hub.className = 'hub';
+  cyl.appendChild(hub);
+};
+
+const openRoulette = () => {
+  modalOpen = true;
+  const n = bulletsForRound();
+  $('bulletsInfo').textContent = `Патронов: ${n} из 6`;
+  $('rouletteResult').textContent = '';
+  $('rouletteResult').className = '';
+  $('spinBtn').style.display = '';
+  $('spinBtn').disabled = false;
+  $('continueBtn').style.display = 'none';
+  renderChambers(n);
+  cylinderRot = 0;
+  const cyl = $('cylinder');
+  cyl.style.transition = 'none';
+  cyl.style.transform = 'rotate(0deg)';
+  $('rouletteModal').classList.add('show');
+  haptic('warning');
+};
+
+$('spinBtn').addEventListener('click', () => {
+  ensureAudio();
+  $('spinBtn').disabled = true;
+  $('spinBtn').style.display = 'none';
+  const target = Math.floor(Math.random() * 6);
+  /* в проде исход решает сервер — клиент только анимирует */
+  const spins = 3 + Math.floor(Math.random() * 2);
+  cylinderRot = spins * 360 + (360 - target * 60);
+  const cyl = $('cylinder');
+  cyl.style.transition = 'transform 2.6s cubic-bezier(0.16, 1, 0.3, 1)';
+  cyl.style.transform = `rotate(${cylinderRot}deg)`;
+
+  let ticks = 0;
+  const tickInt = setInterval(() => {
+    clickSound(3);
+    haptic('light');
+    if (++ticks > 14) clearInterval(tickInt);
+  }, 150);
+
+  setTimeout(() => {
+    clearInterval(tickInt);
+    const hit = chamberLoaded[target];
+    const res = $('rouletteResult');
+    if (hit) {
+      res.textContent = '💥 ПУЛЯ';
+      res.className = 'bad';
+      haptic('error');
+      setTimeout(showDeath, 1300);
+    } else {
+      res.textContent = '✓ ПРОНЕСЛО';
+      res.className = 'ok';
+      haptic('success');
+      $('continueBtn').style.display = '';
+    }
+  }, 2700);
+});
+
+$('continueBtn').addEventListener('click', () => {
+  $('rouletteModal').classList.remove('show');
+  round++;
+  updateHUD();
+  setTimeout(() => {
+    if (pendingUpgrades > 0) showUpgrade();
+    else resumeRun();
+  }, 350);
+});
+
+/* ===== улучшения ===== */
+const UPGRADE_POOL = [
+  { key: 'mass', name: 'Масса', desc: 'Барабан дольше крутится', fmt: (v) => `+${v}%`, apply: (v) => (stats.mass *= 1 + v / 100) },
+  { key: 'impulse', name: 'Импульс', desc: 'Сильнее каждый свайп', fmt: (v) => `+${v}%`, apply: (v) => (stats.impulse *= 1 + v / 100) },
+  { key: 'income', name: 'Инком', desc: 'Больше монет за оборот', fmt: (v) => `+${v}%`, apply: (v) => (stats.income *= 1 + v / 100) },
+  { key: 'mult', name: 'Крит', desc: 'Чаще критические монеты', fmt: (v) => `x${(1 + v / 100).toFixed(1)}`, apply: (v) => (stats.multiplier *= 1 + v / 100) },
+  { key: 'luck', name: 'Удача', desc: 'Меньше патронов в рулетке', fmt: () => '+1', apply: () => (stats.luck = Math.min(stats.luck + 0.18, 0.6)) },
+  { key: 'lube', name: 'Смазка', desc: 'Меньше трение барабана', fmt: () => '+1', apply: () => (stats.lubrication = Math.min(stats.lubrication + 0.6, 2.5)) },
+];
+
+const showUpgrade = () => {
+  modalOpen = true;
+  const list = $('upgradeList');
+  list.innerHTML = '';
+  const picks = [...UPGRADE_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
+  picks.forEach((u) => {
+    const v = Math.round((10 + round * 2.5) * (0.8 + Math.random() * 0.5));
+    const btn = document.createElement('button');
+    btn.className = 'up-card';
+    btn.innerHTML = `<div class="name">${u.name} <span>${u.fmt(v)}</span></div><div class="desc">${u.desc}</div>`;
+    btn.addEventListener('click', () => {
+      u.apply(v);
+      pendingUpgrades--;
+      updateHUD();
+      haptic('success');
+      $('upgradeModal').classList.remove('show');
+      setTimeout(() => {
+        if (pendingUpgrades > 0) showUpgrade();
+        else resumeRun();
+      }, 350);
+    });
+    list.appendChild(btn);
+  });
+  $('upgradeModal').classList.add('show');
+};
+
+const resumeRun = () => {
+  modalOpen = false;
+  $('hint').style.display = '';
+};
+
+/* ===== смерть ===== */
+const showDeath = () => {
+  $('rouletteModal').classList.remove('show');
+  $('dRounds').textContent = round;
+  $('dLevel').textContent = level;
+  $('lostPoints').textContent = 'Потеряно: ' + fmt(total);
+  $('deadModal').classList.add('show');
+};
+
+$('restartBtn').addEventListener('click', () => {
+  stats = baseStats();
+  total = 0;
+  round = 1;
+  level = 1;
+  xp = 0;
+  pendingUpgrades = 0;
+  velocity = 0;
+  comboCount = 0;
+  updateHUD();
+  $('deadModal').classList.remove('show');
+  resumeRun();
+});
+
+updateHUD();
+
+window.__dbg = () => ({ v: velocity, modalOpen, runActive, dragging, combo: comboCount, ver: 3 });
+</script>
+</body>
+</html>
