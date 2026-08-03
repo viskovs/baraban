@@ -2,7 +2,7 @@ import SceneKit
 import UIKit
 
 enum DrumFactory {
-    static func makeScene(drumNode: SCNNode, coinSystem: SCNParticleSystem) -> SCNScene {
+    static func makeScene(drumNode: SCNNode, coinSystem: SCNParticleSystem, pileNode: SCNNode) -> SCNScene {
         let scene = SCNScene()
         scene.background.contents = UIColor.black
 
@@ -29,9 +29,12 @@ enum DrumFactory {
 
         configureCoins(coinSystem)
         let emitter = SCNNode()
-        emitter.position = SCNVector3(0, 0.2, 0)
+        emitter.position = SCNVector3(0, 0.2, -1.5)
         emitter.addParticleSystem(coinSystem)
         scene.rootNode.addChildNode(emitter)
+
+        pileNode.position = SCNVector3(0, 0, -1.6)
+        scene.rootNode.addChildNode(pileNode)
 
         let camera = SCNCamera()
         camera.fieldOfView = 45
@@ -63,10 +66,10 @@ enum DrumFactory {
         system.birthRate = 0
         system.particleLifeSpan = 1.6
         system.particleLifeSpanVariation = 0.4
-        system.emitterShape = SCNSphere(radius: 0.35)
+        system.emitterShape = SCNCylinder(radius: 1.2, height: 2.4)
         system.birthDirection = .surfaceNormal
-        system.particleVelocity = 2.4
-        system.particleVelocityVariation = 1.4
+        system.particleVelocity = 1.6
+        system.particleVelocityVariation = 0.8
         system.acceleration = SCNVector3(0, -5.0, 0)
         system.particleSize = 0.15
         system.particleSizeVariation = 0.06
@@ -75,6 +78,34 @@ enum DrumFactory {
         system.orientationMode = .billboardScreenAligned
         system.blendMode = .alpha
         system.isLightingEnabled = false
+    }
+
+    private static let coinMaterial: SCNMaterial = {
+        let material = SCNMaterial()
+        material.diffuse.contents = coinImage()
+        material.lightingModel = .constant
+        material.isDoubleSided = false
+        return material
+    }()
+
+    static func pileCoinNode(index i: Int) -> SCNNode {
+        let plane = SCNPlane(width: 0.46, height: 0.42)
+        plane.materials = [coinMaterial]
+        let node = SCNNode(geometry: plane)
+        let perRow = 11
+        let row = i / perRow
+        let col = i % perRow
+        let xOffset: Float = row % 2 == 1 ? 0.22 : 0
+        let x = -2.3 + Float(col) * 0.45 + xOffset + jitter(i, salt: 12.9898) * 0.14
+        let y = -2.85 + Float(row) * 0.3 + jitter(i, salt: 78.233) * 0.08
+        let z = jitter(i, salt: 39.425) * 0.1
+        node.position = SCNVector3(x, y, z)
+        return node
+    }
+
+    private static func jitter(_ i: Int, salt: Double) -> Float {
+        let v = sin(Double(i) * salt) * 43758.5453
+        return Float(v - v.rounded(.down) - 0.5)
     }
 
     private static func coinImage() -> UIImage {

@@ -14,6 +14,7 @@ final class GameModel: ObservableObject {
 
     let drumNode = SCNNode()
     let coinSystem = SCNParticleSystem()
+    let pileNode = SCNNode()
 
     private var velocity: Double = 0
     private var angle: Double = 0
@@ -37,6 +38,11 @@ final class GameModel: ObservableObject {
         timer = nil
     }
 
+    func tapImpulse() {
+        let next = velocity + Self.maxSwipe * 0.75
+        velocity = max(-Self.maxVelocity, min(Self.maxVelocity, next))
+    }
+
     func crownDelta(_ delta: Double) {
         let power = min(abs(delta) * Self.swipePower * 4, Self.maxSwipe)
         let next = velocity + power * (delta < 0 ? -1 : 1)
@@ -56,6 +62,11 @@ final class GameModel: ObservableObject {
             score += absV * 0.0175 * 25 * frames
         }
         coinSystem.birthRate = speedPct > 0.06 ? CGFloat(speedPct * 70) : 0
+
+        let targetPile = min(Int(score / 40), 170)
+        while pileNode.childNodes.count < targetPile {
+            pileNode.addChildNode(DrumFactory.pileCoinNode(index: pileNode.childNodes.count))
+        }
 
         let normalized = (angle.truncatingRemainder(dividingBy: 360) + 360)
             .truncatingRemainder(dividingBy: 360)
