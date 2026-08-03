@@ -6,50 +6,49 @@ struct ContentView: View {
     @State private var scene: SCNScene?
     @State private var crown: Double = 0
 
-    private let accent = Color(red: 0.357, green: 0.553, blue: 0.937)
-    private let textDark = Color(red: 0.114, green: 0.153, blue: 0.2)
+    private let accent = Color(red: 0.984, green: 0.62, blue: 0.235)
 
     var body: some View {
         ZStack {
-            Color(red: 0.902, green: 0.925, blue: 0.953).ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            if let scene {
+                SceneView(scene: scene, options: [.rendersContinuously])
+                    .ignoresSafeArea()
+            }
+
+            VStack {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(Int(model.score))")
-                        .font(.system(size: 28, weight: .ultraLight, design: .rounded))
+                        .font(.system(size: 26, weight: .ultraLight, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(textDark)
+                        .foregroundStyle(.white)
                         .contentTransition(.numericText())
                     Text("PTS")
                         .font(.system(size: 9, weight: .light))
-                        .foregroundStyle(textDark.opacity(0.4))
+                        .foregroundStyle(.white.opacity(0.4))
                     Spacer()
                     Text(String(format: "%.1f", model.speedPct * 3.3))
                         .font(.system(size: 11, weight: .regular, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(accent)
                 }
-                .padding(.horizontal, 6)
+                .padding(.horizontal, 8)
 
-                if let scene {
-                    SceneView(scene: scene, options: [.rendersContinuously])
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    Spacer()
-                }
+                Spacer()
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(textDark.opacity(0.1))
+                            .fill(.white.opacity(0.12))
                         Capsule()
                             .fill(accent)
                             .frame(width: max(4, geo.size.width * model.speedPct))
                     }
                 }
                 .frame(height: 3)
-                .padding(.horizontal, 8)
-                .padding(.bottom, 2)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 4)
             }
         }
         .focusable(true)

@@ -4,17 +4,17 @@ import UIKit
 enum DrumFactory {
     static func makeScene(drumNode: SCNNode) -> SCNScene {
         let scene = SCNScene()
-        scene.background.contents = UIColor(red: 0.902, green: 0.925, blue: 0.953, alpha: 1)
+        scene.background.contents = UIColor.black
 
         let faceWidth: CGFloat = 0.42
-        let faceHeight: CGFloat = 3.2
+        let faceHeight: CGFloat = 3.4
         let radius = faceWidth / (2 * tan(.pi / 16))
 
         for i in 0..<16 {
             let plane = SCNPlane(width: faceWidth * 0.95, height: faceHeight)
             let material = SCNMaterial()
-            let brightness: CGFloat = i % 2 == 0 ? 0.88 : 0.93
-            material.diffuse.contents = UIColor(hue: 214.0 / 360.0, saturation: 0.08, brightness: brightness, alpha: 1)
+            let brightness: CGFloat = i % 2 == 0 ? 0.96 : 0.82
+            material.diffuse.contents = UIColor(hue: 28.0 / 360.0, saturation: 0.82, brightness: brightness, alpha: 1)
             material.lightingModel = .lambert
             material.isDoubleSided = false
             plane.materials = [material]
@@ -28,15 +28,15 @@ enum DrumFactory {
         scene.rootNode.addChildNode(drumNode)
 
         let camera = SCNCamera()
-        camera.fieldOfView = 42
+        camera.fieldOfView = 45
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 0, 6.4)
+        cameraNode.position = SCNVector3(0, 0, 5.6)
         scene.rootNode.addChildNode(cameraNode)
 
         let keyLight = SCNLight()
         keyLight.type = .directional
-        keyLight.intensity = 850
+        keyLight.intensity = 900
         let keyNode = SCNNode()
         keyNode.light = keyLight
         keyNode.eulerAngles = SCNVector3(-0.25, 0.35, 0)
@@ -44,7 +44,7 @@ enum DrumFactory {
 
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 550
+        ambient.intensity = 450
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
