@@ -13,6 +13,7 @@ final class GameModel: ObservableObject {
     @Published var speedPct: Double = 0
 
     let drumNode = SCNNode()
+    let coinSystem = SCNParticleSystem()
 
     private var velocity: Double = 0
     private var angle: Double = 0
@@ -22,6 +23,10 @@ final class GameModel: ObservableObject {
 
     func start() {
         guard timer == nil else { return }
+        if CommandLine.arguments.contains("--demo-spin") {
+            velocity = 4.5
+            score = 3200
+        }
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
             self?.step(frames: 2)
         }
@@ -50,6 +55,7 @@ final class GameModel: ObservableObject {
         if absV > Self.minVelocity {
             score += absV * 0.0175 * 25 * frames
         }
+        coinSystem.birthRate = speedPct > 0.06 ? CGFloat(speedPct * 70) : 0
 
         let normalized = (angle.truncatingRemainder(dividingBy: 360) + 360)
             .truncatingRemainder(dividingBy: 360)
