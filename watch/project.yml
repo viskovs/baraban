@@ -1,0 +1,22 @@
+name: Baraban
+options:
+  bundleIdPrefix: io.hyperhug
+targets:
+  BarabanWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "11.0"
+    sources:
+      - BarabanWatch
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: io.hyperhug.baraban.watchkitapp
+        PRODUCT_NAME: Baraban
+        INFOPLIST_KEY_WKApplication: YES
+        INFOPLIST_KEY_CFBundleDisplayName: БАРАБАН
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0"
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: 4
+        CODE_SIGN_STYLE: Automatic
